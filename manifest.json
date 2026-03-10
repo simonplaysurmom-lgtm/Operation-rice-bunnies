@@ -1,0 +1,22 @@
+{
+  "short_name": "Rice Bunny",
+  "name": "Operation: Rice Bunny Tracker",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

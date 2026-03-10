@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Operation: Rice Bunny</title>
+    <!-- Links to your manifest file to make it a standalone phone app -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg">
+
+    <!-- Load React, ReactDOM, Babel, and Tailwind CSS -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0a0a; color: white; overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- ICON SYSTEM ---
+        const SVG_PATHS = {
+            Flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+            ChevronLeft: '<polyline points="15 18 9 12 15 6"/>',
+            ChevronRight: '<polyline points="9 18 15 12 9 6"/>',
+            Weight: '<circle cx="12" cy="12" r="9"/><path d="M12 5v14"/><path d="M5 12h14"/>',
+            Dumbbell: '<path d="M6 4v16M18 4v16M2 8h4v8H2zM18 8h4v8h-4zM6 12h12"/>',
+            Activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+            Droplets: '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 6.3 7 6.3s-2.29 2.76-3.29 3.69C2.57 10.92 2 12.02 2 13.18 2 15.4 3.8 17.23 6 17.23Z"/><path d="M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17 6.3 17 6.3s-2.29 2.76-3.29 3.69C12.57 10.92 12 12.02 12 13.18 12 15.4 13.8 17.23 16 17.23Z"/>',
+            Target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+            Wind: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+            X: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+            RefreshCw: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+            Clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+            AlertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+            Download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+            Upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+            Database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
+            Skull: '<circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/>'
+        };
+
+        const Icon = ({ name, className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={name === 'Flame' ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html: SVG_PATHS[name]}} />
+        );
+
+        // --- APP DATA ---
+        const START_DATE = new Date('2026-03-09T00:00:00');
+        const END_DATE = new Date('2026-08-24T23:59:59');
+
+        const ACTIVITIES = [
+            { id: 'swimming', name: 'Swimming', color: 'bg-blue-500', icon: 'Droplets' },
+            { id: 'tennis', name: 'Tennis', color: 'bg-green-500', icon: 'Target' },
+            { id: 'gym', name: 'Gym', color: 'bg-gray-600', icon: 'Dumbbell' },
+            { id: 'cardio', name: 'Cardio', color: 'bg-red-500', icon: 'Activity' },
+            { id: 'abs', name: 'Abs', color: 'bg-orange-500', icon: 'Wind' },
+        ];
+
+        const QUOTES = [
+            "Hana is probably getting f*cked by a guy with an actual six-pack while you're sitting here crying like a little b*tch.",
+            "You think those hot Asian girls at Rice want a fat, pathetic loser? Wake the f*ck up.",
+            "Hana laughed at your weak ass when she left. Prove the b*tch wrong or stay a joke forever.",
+            "Every day you skip the gym, Hana's new man is railing her, and you're one step closer to dying alone.",
+            "Those beautiful Korean and Chinese girls on campus won't even look at your sloppy, undisciplined ass.",
+            "You look like absolute sh*t. No wonder Hana got disgusted and walked away.",
+            "Stop being a lazy f*ck. Hana upgraded, and you're just sitting around getting fatter.",
+            "You want to pull those gorgeous Rice bunnies? Not looking like a melted bag of sh*t, you won't.",
+            "Hana doesn't give a f*ck about you anymore. She's busy getting stretched out by a real man.",
+            "You're pathetic. If you don't lift today, just accept that Hana won and you're a f*cking loser.",
+            "Those college girls are going to walk right past your weak ass to talk to guys who actually squat.",
+            "Hana is probably making fun of your soft body with her friends right now. Go lift, motherf*cker.",
+            "Are you going to cry over Hana like a little p*ssy, or are you going to get shredded and f*ck girls twice as hot as her?",
+            "Your tears don't burn calories, dumbass. Get the f*ck up and do some cardio.",
+            "Hana lost weight and dropped your heavy, useless ass. Make her regret it, or stay a fat f*ck.",
+            "Those top-tier Asian girls want a man, not a whiny, out-of-shape ex-boyfriend. Fix your sh*t.",
+            "Nobody gives a flying f*ck about your broken heart. They only care about results. Stop being a b*tch.",
+            "Imagine running into Hana with a beautiful college girl on your arm. Now look in the mirror—you're too f*cking ugly for that right now.",
+            "Hana threw you away like garbage because you looked like garbage. Build a f*cking chest.",
+            "If you skip this workout, you are explicitly choosing to be the fat loser Hana left behind.",
+            "Hana is out there getting her back blown out while you skip leg day. F*cking pathetic.",
+            "You think a 10/10 Asian girl wants a guy who cries over his ex? Get your sh*t together and lift.",
+            "Hana looked at your weak physique and decided she deserved better. Prove the b*tch wrong.",
+            "Every calorie you drink is another reason Hana is glad she dumped your fat ass.",
+            "Those Korean girls at Rice aren't going to look twice at a guy built like a melted candle.",
+            "You're still stalking Hana's socials while she's choking on some other dude's d*ck. Go do some abs, loser.",
+            "Imagine walking onto campus looking like a Greek god. Now look down at your gut. Fix it, motherf*cker.",
+            "Hana left because you got comfortable and soft. Don't make the same f*cking mistake with the next girl.",
+            "You want those beautiful Rice bunnies to notice you? Put down the fork and pick up the heavy sh*t.",
+            "Your tears are just weakness leaving your body, but fat only leaves when you sweat. Get the f*ck to work."
+        ];
+
+        const PANIC_QUOTES = [
+            "You're about to text her? She's literally getting choked out by a better man right now.",
+            "Hana thinks you're a pathetic loser. Don't f*cking prove her right.",
+            "Every second you sit around missing her, she's moaning someone else's name.",
+            "She doesn't miss you. She's relieved you're gone. Stop being a f*cking b*tch.",
+            "You want to quit? Fine. Stay the exact same fat piece of sh*t she dumped.",
+            "She's showing her friends your texts and laughing at you. Drop the phone and pick up the weights.",
+            "You think she's waiting for you? She forgot what you look like. Grow the f*ck up.",
+            "She lost the weight and realized she was out of your league. Make her regret it.",
+            "Texting her won't make you look less pathetic. A six-pack will. Lift.",
+            "She's busy wrapping her legs around a guy who actually squats. Wake the f*ck up."
+        ];
+
+        const MOTIVATION_IMAGES = [
+            "https://i.postimg.cc/CzFdCNxc/08c11c93dd48c136ce05472b2656c285.jpg",
+            "https://i.postimg.cc/7fxb1VZt/15e11cfaad999156de5ebeeb657066ba.jpg",
+            "https://i.postimg.cc/ykVWhP8G/341f8e7d6ee47d50afcc4e86340d7f6f.jpg",
+            "https://i.postimg.cc/3dKWjBxF/3fb5bc813e6dfb144ea7b2f0a7d4d2bd.jpg",
+            "https://i.postimg.cc/F791bZHx/4ac1fc9b220189839f702f6c45251f4d.jpg",
+            "https://i.postimg.cc/4mJnv5xw/4d4e10395d7b442197dab05155980d04.jpg",
+            "https://i.postimg.cc/TpRhj93S/55f582b3e08ddcc4d19c53bc8dd7cf0e.jpg",
+            "https://i.postimg.cc/D82mQgwM/650cd91f86e79f398ab9ae10a42bfc82.jpg",
+            "https://i.postimg.cc/YhpjN3CX/6f03fa74882968b3b6f629b482cc1773.jpg",
+            "https://i.postimg.cc/fJwk7Kb4/90580067a65b787771b954e0fc5e2221.jpg",
+            "https://i.postimg.cc/qzkgcL7V/999f39e508f7926b5ca7982dfb884c17.jpg",
+            "https://i.postimg.cc/LnHhkT8C/9b58c17d5aa63bb1631c0553326e89f6.jpg",
+            "https://i.postimg.cc/3dKWjBwQ/according-to-the-korean-beauty-standar-these-are-some-of-v0-2u48q1r7b0u81.jpg",
+            "https://i.postimg.cc/dLqDRB0K/ba771cc21dc3c12b99c773a7132ac4de.jpg",
+            "https://i.postimg.cc/56xj53tJ/beautiful-korean-girl-images-51.webp",
+            "https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg",
+            "https://i.postimg.cc/4mJnv53s/c8a4ba1333238b4359a249039ee8ab1a.jpg",
+            "https://i.postimg.cc/LnHhkTsH/e15c7224dd19936af3ed6468abc57972.jpg",
+            "https://i.postimg.cc/VdDvKCJp/Korean-hairstyle-women-ea57c318ee1547ef5bb5f3125c01bcef.jpg",
+            "https://i.postimg.cc/TpC1tDKZ/most-beautiful-korean-actresses-v0-plrutj3zob5f1.webp",
+            "https://i.postimg.cc/jLZ2M7W5/MV5BM2Rl-Yj-Fh-Nz-It-Ym-Vk-MS00Nm-Fi-LTk3NWEt-ODJl-Y2Fh-OTMx-NTIz-Xk-Ey-Xk-Fqc-Gc-V1.jpg",
+            "https://i.postimg.cc/KRJj0MK8/MV5BYWE3MGU4Mjct-Yj-Y1YS00Mj-Jh-LThj-Zj-Yt-NDk5MDFh-Mz-Rk-Mz-Q1Xk-Ey-Xk-Fqc-Gc-V1.jpg",
+            "https://i.postimg.cc/Czm5cqZR/pngtree-beautiful-asian-girl-in-soft-lighting-with-korean-idol-features-picture-image-16676463.png",
+            "https://i.postimg.cc/4mByW9Km/pngtree-beautiful-korean-girl-studio-portrait-with-long-hair-for-instagram-profile-picture-image-166.png",
+            "https://i.postimg.cc/jLZ2M7Wn/pngtree-beautiful-korean-woman-in-white-tank-top-posing-with-natural-light-image-17492155.jpg",
+            "https://i.postimg.cc/XpQqsCZF/pngtree-elegant-portrait-of-a-beautiful-asian-woman-in-casual-attire-image-17481442.jpg",
+            "https://i.postimg.cc/6yYqMv7n/what-do-you-think-of-korean-beauty-standards-v0-1p0pbxfrt3le1.webp"
+        ];
+
+        const getLocalDaysSinceEpoch = () => {
+            const now = new Date();
+            const localTimestamp = now.getTime() - (now.getTimezoneOffset() * 60000);
+            return Math.floor(localTimestamp / 86400000);
+        };
+
+        const App = () => {
+            const [currentDate, setCurrentDate] = useState(new Date(START_DATE));
+            
+            const [activities, setActivities] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('revengeFitnessActivities');
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    return {};
+                }
+            });
+
+            const [weights, setWeights] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('revengeFitnessWeights');
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    return {};
+                }
+            });
+
+            const [manualOffset, setManualOffset] = useState(0);
+            const [currentDayStr, setCurrentDayStr] = useState(new Date().toDateString());
+            const [selectedActivity, setSelectedActivity] = useState(null);
+            
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            const [isPanicMode, setIsPanicMode] = useState(false);
+            const [panicIndex, setPanicIndex] = useState(0);
+            const fileInputRef = useRef(null);
+
+            // Timer Logic
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const difference = +END_DATE - +new Date();
+                    if (difference > 0) {
+                        setTimeLeft({
+                            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                            minutes: Math.floor((difference / 1000 / 60) % 60),
+                            seconds: Math.floor((difference / 1000) % 60)
+                        });
+                    }
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // Save data
+            useEffect(() => {
+                localStorage.setItem('revengeFitnessActivities', JSON.stringify(activities));
+            }, [activities]);
+
+            useEffect(() => {
+                localStorage.setItem('revengeFitnessWeights', JSON.stringify(weights));
+            }, [weights]);
+
+            // Reset daily quote
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const nowStr = new Date().toDateString();
+                    if (nowStr !== currentDayStr) {
+                        setCurrentDayStr(nowStr);
+                        setManualOffset(0);
+                    }
+                }, 60000);
+                return () => clearInterval(timer);
+            }, [currentDayStr]);
+
+            const changeQuote = () => setManualOffset(prev => prev + 1);
+
+            const baseIndex = getLocalDaysSinceEpoch();
+            const activeQuoteIndex = (baseIndex + manualOffset) % QUOTES.length;
+            const activeImageIndex = (baseIndex + manualOffset) % MOTIVATION_IMAGES.length;
+
+            // Gym Analytics
+            const gymSessionsThisMonth = useMemo(() => {
+                const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                let count = 0;
+                Object.entries(activities).forEach(([dateStr, dayActs]) => {
+                    if (dateStr.startsWith(yearMonth)) {
+                        count += dayActs.filter(act => act === 'gym').length;
+                    }
+                });
+                return count;
+            }, [activities, currentDate]);
+
+            // Streak Logic
+            const streak = useMemo(() => {
+                const activeDates = Object.keys(activities)
+                    .filter(dateStr => activities[dateStr] && activities[dateStr].length > 0)
+                    .sort((a, b) => (a > b ? -1 : 1));
+
+                if (activeDates.length === 0) return 0;
+
+                let currentStreak = 1;
+                let checkDate = new Date(activeDates[0] + 'T12:00:00');
+
+                for (let i = 1; i < activeDates.length; i++) {
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    const expectedDateStr = checkDate.toISOString().split('T')[0];
+
+                    if (activeDates[i] === expectedDateStr) {
+                        currentStreak++;
+                    } else {
+                        break;
+                    }
+                }
+                return currentStreak;
+            }, [activities]);
+
+            const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+
+            const prevMonth = () => {
+                const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+                if (newDate >= new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) setCurrentDate(newDate);
+            };
+
+            const nextMonth = () => {
+                const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                if (newDate <= new Date(END_DATE.getFullYear(), END_DATE.getMonth(), 1)) setCurrentDate(newDate);
+            };
+
+            const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const handleWeightChange = (e) => setWeights({ ...weights, [currentMonthKey]: e.target.value });
+
+            // Backup & Restore
+            const exportData = () => {
+                const dataObj = { activities, weights };
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", `revenge_fitness_backup_${new Date().toISOString().split('T')[0]}.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (importedData.activities) setActivities(importedData.activities);
+                        if (importedData.weights) setWeights(importedData.weights);
+                        alert("Data successfully restored. Now get back to work.");
+                    } catch (err) {
+                        alert("Failed to read the backup file.");
+                    }
+                };
+                reader.readAsText(file);
+                if(fileInputRef.current) fileInputRef.current.value = ""; 
+            };
+
+            const handleDragStart = (e, activityId) => e.dataTransfer.setData('activityId', activityId);
+            const handleDrop = (e, dateStr) => {
+                e.preventDefault();
+                const activityId = e.dataTransfer.getData('activityId');
+                if (!activityId) return;
+                setActivities(prev => ({ ...prev, [dateStr]: [...(prev[dateStr] || []), activityId] }));
+            };
+            const handleDragOver = (e) => e.preventDefault();
+            const handleDayClick = (dateStr) => {
+                if (!selectedActivity) return;
+                setActivities(prev => ({ ...prev, [dateStr]: [...(prev[dateStr] || []), selectedActivity] }));
+            };
+            const removeActivity = (dateStr, index) => {
+                setActivities(prev => {
+                    const newDayActivities = [...prev[dateStr]];
+                    newDayActivities.splice(index, 1);
+                    return { ...prev, [dateStr]: newDayActivities };
+                });
+            };
+
+            const isDateInRange = (year, month, day) => {
+                const checkDate = new Date(year, month, day);
+                return checkDate >= START_DATE && checkDate <= END_DATE;
+            };
+
+            return (
+                <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-500/30 pb-20 relative">
+                    
+                    {/* PANIC MODE */}
+                    {isPanicMode && (
+                        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 text-center">
+                            <div className="absolute inset-0 bg-red-900/30 animate-pulse"></div>
+                            <img src={MOTIVATION_IMAGES[panicIndex % MOTIVATION_IMAGES.length]} className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                            <div className="relative z-10 flex flex-col items-center max-w-4xl w-full px-4">
+                                <Icon name="Skull" className="w-24 h-24 text-red-600 mb-8 animate-bounce" />
+                                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-red-500 uppercase italic tracking-tighter drop-shadow-2xl leading-tight">
+                                    "{PANIC_QUOTES[panicIndex % PANIC_QUOTES.length]}"
+                                </h1>
+                                <div className="flex flex-col md:flex-row gap-4 mt-16 w-full max-w-2xl justify-center">
+                                    <button onClick={() => setPanicIndex(prev => prev + 1)} className="flex-1 bg-black/50 hover:bg-neutral-900 border border-neutral-700 text-neutral-300 font-bold py-4 px-6 rounded-full text-sm md:text-base transition-all transform active:scale-95 uppercase tracking-widest">
+                                        Hit Me Again. (Next)
+                                    </button>
+                                    <button onClick={() => setIsPanicMode(false)} className="flex-[2] bg-red-700 hover:bg-red-600 border border-red-500 text-white font-black py-4 px-8 rounded-full text-lg md:text-xl shadow-[0_0_40px_rgba(220,38,38,0.6)] transition-all transform hover:scale-105 active:scale-95 uppercase tracking-widest">
+                                        I'm Done Being A B*tch.
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Header Bar */}
+                    <header className="border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-md sticky top-0 z-50">
+                        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <h1 className="text-xl font-black tracking-tighter uppercase italic text-white flex items-center gap-2">
+                                <span className="text-red-500">Operation:</span> Rice Bunny
+                            </h1>
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border border-neutral-800 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                                    <Icon name="Flame" className={`w-5 h-5 ${streak > 0 ? 'text-orange-500' : 'text-neutral-600'}`} />
+                                    <span className="font-bold text-lg">
+                                        {streak} <span className="text-sm text-neutral-400 font-normal">Day Streak</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-red-950/40 border-b border-red-900/50">
+                            <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-4 text-red-500 text-xs md:text-sm font-bold tracking-widest uppercase">
+                                <Icon name="Clock" className="w-4 h-4" />
+                                <span>Time Left:</span>
+                                <span className="text-white font-mono">{timeLeft.days}D {String(timeLeft.hours).padStart(2, '0')}H {String(timeLeft.minutes).padStart(2, '0')}M {String(timeLeft.seconds).padStart(2, '0')}S</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto px-4 mt-8 space-y-8">
+                        {/* Motivation Section */}
+                        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="md:col-span-2 bg-gradient-to-br from-neutral-900 to-neutral-950 p-8 rounded-2xl border border-neutral-800 relative overflow-hidden group cursor-pointer transition-all hover:border-neutral-700" onClick={changeQuote}>
+                                <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <h2 className="text-neutral-500 text-sm font-bold uppercase tracking-widest">Daily Fuel (Tap to cycle)</h2>
+                                    <button className="flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-red-400 text-xs font-bold px-3 py-1.5 rounded-full transition-colors">
+                                        <Icon name="RefreshCw" className="w-3 h-3" />
+                                        <span>New Roast</span>
+                                    </button>
+                                </div>
+                                <p className="text-xl md:text-3xl font-bold text-white leading-tight italic min-h-[5rem] flex items-center">
+                                    "{QUOTES[activeQuoteIndex]}"
+                                </p>
+                            </div>
+                            <div className="h-48 md:h-auto rounded-2xl border border-neutral-800 overflow-hidden relative bg-black">
+                                <img src={MOTIVATION_IMAGES[activeImageIndex]} className="w-full h-full object-cover opacity-100 hover:opacity-60 transition-opacity duration-500" />
+                                <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white border border-white/10">The Goal.</div>
+                            </div>
+                        </section>
+
+                        <section className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                            <div className="lg:col-span-1 space-y-6">
+                                {/* Gym Analytics */}
+                                <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 relative overflow-hidden">
+                                    <div className="absolute -right-4 -bottom-4 opacity-5"><Icon name="Dumbbell" className="w-32 h-32" /></div>
+                                    <h3 className="font-bold uppercase tracking-wider text-sm text-neutral-400 mb-2">Monthly Gym Stats</h3>
+                                    <div className="flex items-end gap-3 relative z-10">
+                                        <span className="text-6xl font-black text-white leading-none">{gymSessionsThisMonth}</span>
+                                        <span className="text-xs text-neutral-500 pb-1 font-medium uppercase tracking-wider">Gym Sessions in<br/><span className="text-red-400 font-bold">{currentDate.toLocaleString('default', { month: 'long' })}</span></span>
+                                    </div>
+                                </div>
+
+                                {/* Weight Tracker */}
+                                <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+                                    <div className="flex items-center gap-2 mb-4 text-neutral-400">
+                                        <Icon name="Weight" className="w-5 h-5" />
+                                        <h3 className="font-bold uppercase tracking-wider text-sm">Weight Tracker</h3>
+                                    </div>
+                                    <div className="relative">
+                                        <input type="number" placeholder="e.g. 75" value={weights[currentMonthKey] || ''} onChange={handleWeightChange} className="w-full bg-neutral-950 border border-neutral-800 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-mono text-xl" />
+                                        <span className="absolute right-4 top-3.5 text-neutral-500 font-bold">kgs</span>
+                                    </div>
+                                </div>
+
+                                {/* Draggable Activities */}
+                                <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+                                    <h3 className="font-bold uppercase tracking-wider text-sm text-neutral-400 mb-4">Activities</h3>
+                                    <p className="text-xs text-neutral-500 mb-4">Desktop: Drag & Drop. <br/>Mobile: Tap to select, then tap a day.</p>
+                                    <div className="space-y-3">
+                                        {ACTIVITIES.map(activity => {
+                                            const isSelected = selectedActivity === activity.id;
+                                            return (
+                                                <div key={activity.id} draggable onDragStart={(e) => handleDragStart(e, activity.id)} onClick={() => setSelectedActivity(isSelected ? null : activity.id)} className={`${activity.color} ${isSelected ? 'bg-opacity-40 border-white ring-2 ring-white scale-105' : 'bg-opacity-20 border-transparent'} border text-${activity.color.split('-')[1]}-400 p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-opacity-30 transition-all`}>
+                                                    <Icon name={activity.icon} className="w-5 h-5" />
+                                                    <span className="font-bold">{activity.name}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Backup & Restore */}
+                                <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+                                    <div className="flex items-center gap-2 mb-4 text-neutral-400">
+                                        <Icon name="Database" className="w-5 h-5" />
+                                        <h3 className="font-bold uppercase tracking-wider text-sm">Data Management</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <button onClick={exportData} className="w-full flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white p-3 rounded-xl text-sm font-bold transition-colors">
+                                            <Icon name="Download" className="w-4 h-4" /> Save Backup File
+                                        </button>
+                                        <div className="relative">
+                                            <input type="file" accept=".json" onChange={importData} ref={fileInputRef} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                            <button className="w-full flex items-center justify-center gap-2 border border-neutral-700 hover:bg-neutral-800 text-neutral-300 p-3 rounded-xl text-sm font-bold transition-colors pointer-events-none">
+                                                <Icon name="Upload" className="w-4 h-4" /> Restore From File
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Calendar */}
+                            <div className="lg:col-span-3 bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="text-2xl font-black text-white">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                                    <div className="flex gap-2">
+                                        <button onClick={prevMonth} className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white transition-colors"><Icon name="ChevronLeft" className="w-5 h-5" /></button>
+                                        <button onClick={nextMonth} className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white transition-colors"><Icon name="ChevronRight" className="w-5 h-5" /></button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-7 gap-2 mb-2">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="text-center text-xs font-bold text-neutral-500 uppercase tracking-wider py-2">{day}</div>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-7 gap-2">
+                                    {Array.from({ length: firstDayOfMonth }).map((_, index) => (
+                                        <div key={`empty-${index}`} className="min-h-[100px] rounded-xl bg-neutral-950/30 border border-neutral-900/50"></div>
+                                    ))}
+
+                                    {Array.from({ length: daysInMonth }).map((_, index) => {
+                                        const day = index + 1;
+                                        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                        const inRange = isDateInRange(currentDate.getFullYear(), currentDate.getMonth(), day);
+                                        const dayActivities = activities[dateStr] || [];
+
+                                        return (
+                                            <div key={dateStr} onDragOver={inRange ? handleDragOver : undefined} onDrop={inRange ? (e) => handleDrop(e, dateStr) : undefined} onClick={inRange ? () => handleDayClick(dateStr) : undefined} className={`min-h-[100px] rounded-xl border p-2 flex flex-col transition-colors ${inRange ? `bg-neutral-950 border-neutral-800 hover:border-neutral-600 ${selectedActivity ? 'cursor-crosshair hover:bg-neutral-900' : ''}` : 'bg-neutral-950/30 border-neutral-900/50 opacity-50 cursor-not-allowed'}`}>
+                                                <span className={`text-sm font-bold mb-2 ${inRange ? 'text-neutral-400' : 'text-neutral-700'}`}>{day}</span>
+                                                <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar">
+                                                    {dayActivities.map((actId, idx) => {
+                                                        const activity = ACTIVITIES.find(a => a.id === actId);
+                                                        if (!activity) return null;
+                                                        return (
+                                                            <div key={`${dateStr}-${idx}`} className={`${activity.color} text-white text-[10px] font-bold px-2 py-1.5 rounded-md flex items-center justify-between group`}>
+                                                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                                                    <Icon name={activity.icon} className="w-3 h-3 flex-shrink-0" />
+                                                                    <span className="truncate">{activity.name}</span>
+                                                                </div>
+                                                                <button onClick={(e) => { e.stopPropagation(); removeActivity(dateStr, idx); }} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-black/20 rounded p-0.5 transition-all bg-black/20 md:bg-transparent">
+                                                                    <Icon name="X" className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    {/* Panic Button */}
+                    <button onClick={() => setIsPanicMode(true)} className="fixed bottom-6 right-6 z-40 bg-red-600 hover:bg-red-500 text-white rounded-full p-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all group">
+                        <Icon name="AlertTriangle" className="w-8 h-8 group-hover:animate-bounce" />
+                    </button>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
