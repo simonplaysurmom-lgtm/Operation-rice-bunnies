@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Operation: Rice Bunny</title>
-    <!-- Links to your manifest file to make it a standalone phone app -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg">
 
-    <!-- Load React, ReactDOM, Babel, and Tailwind CSS -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -166,7 +164,10 @@
                 }
             });
 
-            const [manualOffset, setManualOffset] = useState(0);
+            // Separated state for quote and image rotation
+            const [quoteOffset, setQuoteOffset] = useState(0);
+            const [imageOffset, setImageOffset] = useState(0);
+            
             const [currentDayStr, setCurrentDayStr] = useState(new Date().toDateString());
             const [selectedActivity, setSelectedActivity] = useState(null);
             
@@ -206,17 +207,23 @@
                     const nowStr = new Date().toDateString();
                     if (nowStr !== currentDayStr) {
                         setCurrentDayStr(nowStr);
-                        setManualOffset(0);
+                        setQuoteOffset(0);
+                        setImageOffset(0);
                     }
                 }, 60000);
                 return () => clearInterval(timer);
             }, [currentDayStr]);
 
-            const changeQuote = () => setManualOffset(prev => prev + 1);
+            const changeQuote = () => setQuoteOffset(prev => prev + 1);
+            
+            const changeImage = (e) => {
+                e.stopPropagation();
+                setImageOffset(prev => prev + 1);
+            };
 
             const baseIndex = getLocalDaysSinceEpoch();
-            const activeQuoteIndex = (baseIndex + manualOffset) % QUOTES.length;
-            const activeImageIndex = (baseIndex + manualOffset) % MOTIVATION_IMAGES.length;
+            const activeQuoteIndex = (baseIndex + quoteOffset) % QUOTES.length;
+            const activeImageIndex = (baseIndex + imageOffset) % MOTIVATION_IMAGES.length;
 
             // Gym Analytics
             const gymSessionsThisMonth = useMemo(() => {
@@ -390,9 +397,17 @@
                                     "{QUOTES[activeQuoteIndex]}"
                                 </p>
                             </div>
-                            <div className="h-48 md:h-auto rounded-2xl border border-neutral-800 overflow-hidden relative bg-black">
-                                <img src={MOTIVATION_IMAGES[activeImageIndex]} className="w-full h-full object-cover opacity-100 hover:opacity-60 transition-opacity duration-500" />
-                                <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white border border-white/10">The Goal.</div>
+                            
+                            {/* Updated Image Container */}
+                            <div className="w-full rounded-2xl border border-neutral-800 overflow-hidden relative group">
+                                <img src={MOTIVATION_IMAGES[activeImageIndex]} className="w-full h-auto block opacity-100 transition-opacity duration-500" />
+                                <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white border border-white/10 shadow-lg pointer-events-none">
+                                    The Goal.
+                                </div>
+                                {/* New Picture Cycle Button */}
+                                <button onClick={changeImage} className="absolute top-3 right-3 bg-black/60 hover:bg-black/90 backdrop-blur p-2.5 rounded-full text-white border border-white/20 transition-all shadow-lg flex items-center justify-center hover:scale-105 active:scale-95" title="Next Picture">
+                                    <Icon name="RefreshCw" className="w-4 h-4" />
+                                </button>
                             </div>
                         </section>
 
