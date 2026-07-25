@@ -8,7 +8,6 @@
     <meta name="theme-color" content="#0a0a0a">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/mtbh3wrR/c0c4ef5cbb9f0183954f393fc46a283b.jpg">
 
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -22,10 +21,8 @@
 <body>
     <div id="root"></div>
 
-
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
-
 
         // --- ICON SYSTEM ---
         const SVG_PATHS = {
@@ -46,19 +43,17 @@
             Upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
             Database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
             Skull: '<circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/>',
-            LineChart: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>'
+            LineChart: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+            Copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'
         };
 
-
         const Icon = ({ name, className }) => (
-            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={name === 'Flame' ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html: SVG_PATHS[name]}} />
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={name === 'Flame' ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html: SVG_PATHS[name] || ''}} />
         );
-
 
         // --- APP DATA ---
         const START_DATE = new Date('2026-03-09T00:00:00');
         const END_DATE = new Date('2026-08-24T23:59:59');
-
 
         const ACTIVITIES = [
             { id: 'swimming', name: 'Swimming', color: 'bg-blue-500', icon: 'Droplets' },
@@ -67,7 +62,6 @@
             { id: 'cardio', name: 'Cardio', color: 'bg-red-500', icon: 'Activity' },
             { id: 'abs', name: 'Abs', color: 'bg-orange-500', icon: 'Wind' },
         ];
-
 
         const QUOTES = [
             "Hana is tightening her p*ssy for other guys while you're sitting here jerking off gaining weight. Fix your sh*t, scum.",
@@ -92,7 +86,6 @@
             "Hana upgraded. Every rep you miss confirms she made the right choice. Don't let the b*tch win."
         ];
 
-
         const PANIC_QUOTES = [
             "You're about to text her? You're basically begging for a front-row seat to watch her get f*cked. Put the phone down, c*ckold.",
             "She views you as a disgusting insect. Texting her is just proving you're the pathetic loser she thinks you are. Lift.",
@@ -105,7 +98,6 @@
             "Texting her won't make you look better. A six-pack and a massive chest will. LIFT, LOSER. NOW.",
             "Hana is wrapped around a guy who actually squats. Wake the f*ck up and stop being a parasite. Get to work."
         ];
-
 
         const MOTIVATION_IMAGES = [
             "https://i.postimg.cc/CzFdCNxc/08c11c93dd48c136ce05472b2656c285.jpg",
@@ -137,17 +129,15 @@
             "https://i.postimg.cc/6yYqMv7n/what-do-you-think-of-korean-beauty-standards-v0-1p0pbxfrt3le1.webp"
         ];
 
-
         const getLocalDaysSinceEpoch = () => {
             const now = new Date();
             const localTimestamp = now.getTime() - (now.getTimezoneOffset() * 60000);
             return Math.floor(localTimestamp / 86400000);
         };
 
-
         const App = () => {
             const [currentDate, setCurrentDate] = useState(new Date(START_DATE));
-           
+            
             const [activities, setActivities] = useState(() => {
                 try {
                     const saved = localStorage.getItem('revengeFitnessActivities');
@@ -156,7 +146,6 @@
                     return {};
                 }
             });
-
 
             const [weights, setWeights] = useState(() => {
                 try {
@@ -167,19 +156,54 @@
                 }
             });
 
-
             const [quoteOffset, setQuoteOffset] = useState(0);
             const [imageOffset, setImageOffset] = useState(0);
             const [currentDayStr, setCurrentDayStr] = useState(new Date().toDateString());
             const [selectedActivity, setSelectedActivity] = useState(null);
             const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-           
+            
             const [isPanicMode, setIsPanicMode] = useState(false);
             const [panicQuoteIndex, setPanicQuoteIndex] = useState(0);
             const [panicImageIndex, setPanicImageIndex] = useState(0);
             const [isGraphOpen, setIsGraphOpen] = useState(false);
             const fileInputRef = useRef(null);
 
+            // Persistent reference for background audio loop
+            const bgAudioRef = useRef(null);
+
+            // 1. FIRST TAP AUDIO LOOP INITIALIZATION
+            useEffect(() => {
+                const audio = new Audio('bg-music.mp3');
+                audio.loop = true;
+                audio.volume = 0.3; // Set background audio volume
+                bgAudioRef.current = audio;
+
+                const startAudioOnFirstTap = () => {
+                    if (bgAudioRef.current) {
+                        bgAudioRef.current.play().catch(e => console.log("Autoplay prevented:", e));
+                    }
+                    window.removeEventListener('touchstart', startAudioOnFirstTap);
+                    window.removeEventListener('click', startAudioOnFirstTap);
+                };
+
+                window.addEventListener('touchstart', startAudioOnFirstTap);
+                window.addEventListener('click', startAudioOnFirstTap);
+
+                return () => {
+                    window.removeEventListener('touchstart', startAudioOnFirstTap);
+                    window.removeEventListener('click', startAudioOnFirstTap);
+                    if (bgAudioRef.current) {
+                        bgAudioRef.current.pause();
+                    }
+                };
+            }, []);
+
+            // Force request persistent storage on mobile devices
+            useEffect(() => {
+                if (navigator.storage && navigator.storage.persist) {
+                    navigator.storage.persist();
+                }
+            }, []);
 
             useEffect(() => {
                 const timer = setInterval(() => {
@@ -196,16 +220,13 @@
                 return () => clearInterval(timer);
             }, []);
 
-
             useEffect(() => {
                 localStorage.setItem('revengeFitnessActivities', JSON.stringify(activities));
             }, [activities]);
 
-
             useEffect(() => {
                 localStorage.setItem('revengeFitnessWeights', JSON.stringify(weights));
             }, [weights]);
-
 
             useEffect(() => {
                 const timer = setInterval(() => {
@@ -219,15 +240,12 @@
                 return () => clearInterval(timer);
             }, [currentDayStr]);
 
-
             const changeQuote = () => setQuoteOffset(prev => prev + 1);
             const changeImage = (e) => { e.stopPropagation(); setImageOffset(prev => prev + 1); };
-
 
             const baseIndex = getLocalDaysSinceEpoch();
             const activeQuoteIndex = (baseIndex + quoteOffset) % QUOTES.length;
             const activeImageIndex = (baseIndex + imageOffset) % MOTIVATION_IMAGES.length;
-
 
             const triggerPanic = () => {
                 setPanicQuoteIndex(Math.floor(Math.random() * PANIC_QUOTES.length));
@@ -235,12 +253,10 @@
                 setIsPanicMode(true);
             };
 
-
             const cyclePanic = () => {
                 setPanicQuoteIndex(Math.floor(Math.random() * PANIC_QUOTES.length));
                 setPanicImageIndex(Math.floor(Math.random() * MOTIVATION_IMAGES.length));
             };
-
 
             const chartData = useMemo(() => {
                 const months = [
@@ -257,9 +273,9 @@
                     { key: '2026-07', label: 'Jul' },
                     { key: '2026-08', label: 'Aug' }
                 ];
-               
+                
                 let lastValidWeight = null;
-               
+                
                 return months.map(m => {
                     let w = null;
                     if (m.preWt !== undefined) {
@@ -268,7 +284,7 @@
                         const userWt = weights[m.key];
                         if (userWt) w = parseFloat(userWt);
                     }
-                   
+                    
                     let diff = null;
                     if (w !== null) {
                         if (lastValidWeight !== null) {
@@ -276,11 +292,10 @@
                         }
                         lastValidWeight = w;
                     }
-                   
+                    
                     return { label: m.label, weight: w, isPre: m.preWt !== undefined, diff: diff };
                 });
             }, [weights]);
-
 
             const gymSessionsThisMonth = useMemo(() => {
                 const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -292,7 +307,6 @@
                 });
                 return count;
             }, [activities, currentDate]);
-
 
             const streak = useMemo(() => {
                 const activeDates = Object.keys(activities)
@@ -313,39 +327,80 @@
                 return currentStreak;
             }, [activities]);
 
-
             const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
             const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-
 
             const prevMonth = () => {
                 const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
                 if (newDate >= new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) setCurrentDate(newDate);
             };
 
-
             const nextMonth = () => {
                 const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
                 if (newDate <= new Date(END_DATE.getFullYear(), END_DATE.getMonth(), 1)) setCurrentDate(newDate);
             };
 
-
             const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const handleWeightChange = (e) => setWeights({ ...weights, [currentMonthKey]: e.target.value });
 
-
+            // FIXED: Mobile-compatible Blob File Export
             const exportData = () => {
-                const dataObj = { activities, weights };
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj));
-                const downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", `revenge_fitness_backup_${new Date().toISOString().split('T')[0]}.json`);
-                document.body.appendChild(downloadAnchorNode);
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
+                try {
+                    const dataObj = { activities, weights };
+                    const jsonString = JSON.stringify(dataObj, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.href = url;
+                    downloadAnchorNode.download = `rice_bunny_backup_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    alert("Export failed. Use the 'Copy Backup Text' button instead!");
+                }
             };
 
+            // NEW: Clipboard Backup (Fail-safe for Mobile PWAs)
+            const copyBackupToClipboard = () => {
+                const dataObj = { activities, weights };
+                const dataStr = JSON.stringify(dataObj);
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(dataStr).then(() => {
+                        alert("Backup code copied to clipboard! Paste and save it in your Notes app.");
+                    }).catch(() => {
+                        prompt("Copy your backup text manually:", dataStr);
+                    });
+                } else {
+                    prompt("Copy your backup text manually:", dataStr);
+                }
+            };
 
+            // NEW: Text Restore Option
+            const restoreFromText = () => {
+                const text = prompt("Paste your backup code text here:");
+                if (!text) return;
+                try {
+                    const importedData = JSON.parse(text.trim());
+                    if (importedData.activities || importedData.weights) {
+                        const newActs = importedData.activities || {};
+                        const newWts = importedData.weights || {};
+                        setActivities(newActs);
+                        setWeights(newWts);
+                        localStorage.setItem('revengeFitnessActivities', JSON.stringify(newActs));
+                        localStorage.setItem('revengeFitnessWeights', JSON.stringify(newWts));
+                        alert("Data successfully restored from code!");
+                    } else {
+                        alert("Invalid backup code.");
+                    }
+                } catch (err) {
+                    alert("Failed to read backup code. Make sure you pasted the exact text.");
+                }
+            };
+
+            // FIXED: Reliable Import for File Pickers
             const importData = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -353,17 +408,24 @@
                 reader.onload = (e) => {
                     try {
                         const importedData = JSON.parse(e.target.result);
-                        if (importedData.activities) setActivities(importedData.activities);
-                        if (importedData.weights) setWeights(importedData.weights);
-                        alert("Data successfully restored. Now get back to work.");
+                        if (importedData.activities || importedData.weights) {
+                            const newActs = importedData.activities || {};
+                            const newWts = importedData.weights || {};
+                            setActivities(newActs);
+                            setWeights(newWts);
+                            localStorage.setItem('revengeFitnessActivities', JSON.stringify(newActs));
+                            localStorage.setItem('revengeFitnessWeights', JSON.stringify(newWts));
+                            alert("Data successfully restored from file!");
+                        } else {
+                            alert("File is missing activities or weight data.");
+                        }
                     } catch (err) {
-                        alert("Failed to read the backup file.");
+                        alert("Failed to read backup file.");
                     }
                 };
                 reader.readAsText(file);
                 if(fileInputRef.current) fileInputRef.current.value = "";
             };
-
 
             const handleDragStart = (e, activityId) => e.dataTransfer.setData('activityId', activityId);
             const handleDrop = (e, dateStr) => {
@@ -385,12 +447,10 @@
                 });
             };
 
-
             const isDateInRange = (year, month, day) => {
                 const checkDate = new Date(year, month, day);
                 return checkDate >= START_DATE && checkDate <= END_DATE;
             };
-
 
             return (
                 <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-500/30 pb-20 relative">
@@ -415,7 +475,6 @@
                         </div>
                     )}
 
-
                     {isGraphOpen && (
                         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center">
                             <div className="bg-neutral-900 border border-neutral-800 p-6 w-full max-w-5xl rounded-3xl relative shadow-2xl flex flex-col">
@@ -426,7 +485,7 @@
                                     <span className="text-red-500">Weight Loss</span> Trajectory
                                 </h2>
                                 <p className="text-neutral-400 text-sm mb-6 text-left uppercase font-bold tracking-widest italic">Target: till you get abs wanka.</p>
-                               
+                                
                                 <div className="w-full overflow-x-auto hide-scrollbar bg-neutral-950 rounded-xl border border-neutral-800 p-4">
                                     <div className="min-w-[600px] h-[300px] md:h-[400px] relative">
                                         {(() => {
@@ -440,7 +499,7 @@
                                             const getX = (i) => (i / (chartData.length - 1)) * (svgWidth - paddingX * 2) + paddingX;
                                             const getY = (w) => svgHeight - paddingY - ((w - minW) / (maxW - minW)) * usableHeight;
                                             const validPoints = chartData.map((d, i) => d.weight !== null ? `${getX(i)},${getY(d.weight)}` : null).filter(Boolean).join(' ');
-                                           
+                                            
                                             return (
                                                 <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full font-mono">
                                                     {[65, 75, 85, 95].map(w => (
@@ -478,7 +537,6 @@
                         </div>
                     )}
 
-
                     <header className="border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-md sticky top-0 z-50">
                         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                             <h1 className="text-xl font-black tracking-tighter uppercase italic text-white flex items-center gap-2">
@@ -501,7 +559,6 @@
                             </div>
                         </div>
                     </header>
-
 
                     <main className="max-w-6xl mx-auto px-4 mt-8 space-y-8">
                         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -528,7 +585,6 @@
                                 </button>
                             </div>
                         </section>
-
 
                         <section className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                             <div className="lg:col-span-1 space-y-6">
@@ -565,6 +621,8 @@
                                         })}
                                     </div>
                                 </div>
+
+                                {/* DATA MANAGEMENT BOX WITH FAILSAFE FIXES */}
                                 <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
                                     <div className="flex items-center gap-2 mb-4 text-neutral-400">
                                         <Icon name="Database" className="w-5 h-5" />
@@ -574,16 +632,24 @@
                                         <button onClick={exportData} className="w-full flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white p-3 rounded-xl text-sm font-bold transition-colors">
                                             <Icon name="Download" className="w-4 h-4" /> Save Backup File
                                         </button>
-                                        <div className="relative">
-                                            <input type="file" accept=".json" onChange={importData} ref={fileInputRef} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                            <button className="w-full flex items-center justify-center gap-2 border border-neutral-700 hover:bg-neutral-800 text-neutral-300 p-3 rounded-xl text-sm font-bold transition-colors pointer-events-none">
-                                                <Icon name="Upload" className="w-4 h-4" /> Restore From File
+                                        
+                                        <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="w-full flex items-center justify-center gap-2 border border-neutral-700 hover:bg-neutral-800 text-neutral-300 p-3 rounded-xl text-sm font-bold transition-colors">
+                                            <Icon name="Upload" className="w-4 h-4" /> Restore From File
+                                        </button>
+                                        <input type="file" accept=".json" onChange={importData} ref={fileInputRef} className="hidden" />
+
+                                        <div className="pt-2 border-t border-neutral-800 space-y-2">
+                                            <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-wider">Mobile Clipboard Fail-Safe:</p>
+                                            <button onClick={copyBackupToClipboard} className="w-full flex items-center justify-center gap-2 bg-red-950/40 hover:bg-red-900/50 border border-red-900/50 text-red-400 p-2.5 rounded-xl text-xs font-bold transition-colors">
+                                                <Icon name="Copy" className="w-3.5 h-3.5" /> Copy Backup Text
+                                            </button>
+                                            <button onClick={restoreFromText} className="w-full flex items-center justify-center gap-2 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 p-2.5 rounded-xl text-xs font-bold transition-colors">
+                                                <Icon name="RefreshCw" className="w-3.5 h-3.5" /> Paste Text to Restore
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
 
                             <div className="lg:col-span-3 bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
                                 <div className="flex items-center justify-between mb-8">
@@ -635,11 +701,9 @@
                         </section>
                     </main>
 
-
                     <button onClick={() => setIsGraphOpen(true)} className="fixed bottom-6 left-6 z-40 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-white rounded-full p-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all group">
                         <Icon name="LineChart" className="w-8 h-8 text-neutral-400 group-hover:text-white" />
                     </button>
-
 
                     <button onClick={triggerPanic} className="fixed bottom-6 right-6 z-40 bg-red-600 hover:bg-red-500 text-white rounded-full p-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all group">
                         <Icon name="AlertTriangle" className="w-8 h-8 group-hover:animate-bounce" />
@@ -647,7 +711,6 @@
                 </div>
             );
         };
-
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
