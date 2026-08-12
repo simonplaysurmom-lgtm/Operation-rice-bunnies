@@ -32,7 +32,7 @@
             Weight: '<circle cx="12" cy="12" r="9"/><path d="M12 5v14"/><path d="M5 12h14"/>',
             Dumbbell: '<path d="M6 4v16M18 4v16M2 8h4v8H2zM18 8h4v8h-4zM6 12h12"/>',
             Activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
-            Droplets: '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 6.3 7 6.3s-2.29 2.76-3.29 3.69C2.57 10.92 2 12.02 2 13.18 2 15.4 3.8 17.23 6 17.23Z"/><path d="M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17 6.3 17 6.3s-2.29 2.76-3.29 3.69C12.57 10.92 12 12.02 12 13.18 12 15.4 13.8 17.23 16 17.23Z"/>',
+            Droplets: '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 6.3 7 6.3s-2.29 2.76-3.29 3.69C2.57 10.92 2 12.02 2 13.18 2 15.4 3.8 17.23 6 17.23Z"/><path d="M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17 6.3 17 6.3s-2.29 2.76-3.29 3.69C12.57 10.92 12 12.02 12 13.18 12 15.4 3.8 17.23 16 17.23Z"/>',
             Target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
             Wind: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
             X: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
@@ -53,7 +53,12 @@
 
         // --- APP DATA ---
         const START_DATE = new Date('2026-03-09T00:00:00');
-        const END_DATE = new Date('2026-08-24T23:59:59');
+        const END_DATE = new Date('2027-03-31T23:59:59');
+
+        const PHASE_1_START = new Date(2026, 2, 1);
+        const PHASE_1_END = new Date(2026, 7, 31, 23, 59, 59);
+        const PHASE_2_START = new Date(2026, 8, 1);
+        const PHASE_2_END = new Date(2027, 2, 31, 23, 59, 59);
 
         const ACTIVITIES = [
             { id: 'swimming', name: 'Swimming', color: 'bg-blue-500', icon: 'Droplets' },
@@ -136,7 +141,25 @@
         };
 
         const App = () => {
-            const [currentDate, setCurrentDate] = useState(new Date(START_DATE));
+            const [activePhase, setActivePhase] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('revengeFitnessActivePhase');
+                    return saved ? JSON.parse(saved) : 1;
+                } catch (e) {
+                    return 1;
+                }
+            });
+
+            const [currentDate, setCurrentDate] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('revengeFitnessCurrentDate');
+                    if (saved) {
+                        const parsed = new Date(saved);
+                        if (!isNaN(parsed.getTime())) return parsed;
+                    }
+                } catch (e) {}
+                return new Date(START_DATE);
+            });
             
             const [activities, setActivities] = useState(() => {
                 try {
@@ -170,6 +193,15 @@
 
             // Persistent reference for background audio loop
             const bgAudioRef = useRef(null);
+
+            // Save last opened month and active phase to localStorage
+            useEffect(() => {
+                localStorage.setItem('revengeFitnessCurrentDate', currentDate.toISOString());
+            }, [currentDate]);
+
+            useEffect(() => {
+                localStorage.setItem('revengeFitnessActivePhase', JSON.stringify(activePhase));
+            }, [activePhase]);
 
             // 1. FIRST TAP AUDIO LOOP INITIALIZATION
             useEffect(() => {
@@ -260,18 +292,25 @@
 
             const chartData = useMemo(() => {
                 const months = [
-                    { key: '2025-09', label: 'Sep', preWt: 93.0 },
+                    { key: '2025-09', label: "Sep '25", preWt: 93.0 },
                     { key: '2025-10', label: 'Oct', preWt: 91.4 },
                     { key: '2025-11', label: 'Nov', preWt: 89.8 },
                     { key: '2025-12', label: 'Dec', preWt: 88.2 },
-                    { key: '2026-01', label: 'Jan', preWt: 86.6 },
+                    { key: '2026-01', label: "Jan '26", preWt: 86.6 },
                     { key: '2026-02', label: 'Feb', preWt: 85.0 },
                     { key: '2026-03', label: 'Mar' },
                     { key: '2026-04', label: 'Apr' },
                     { key: '2026-05', label: 'May' },
                     { key: '2026-06', label: 'Jun' },
                     { key: '2026-07', label: 'Jul' },
-                    { key: '2026-08', label: 'Aug' }
+                    { key: '2026-08', label: 'Aug' },
+                    { key: '2026-09', label: 'Sep' },
+                    { key: '2026-10', label: 'Oct' },
+                    { key: '2026-11', label: 'Nov' },
+                    { key: '2026-12', label: 'Dec' },
+                    { key: '2027-01', label: "Jan '27" },
+                    { key: '2027-02', label: 'Feb' },
+                    { key: '2027-03', label: "Mar '27" }
                 ];
                 
                 let lastValidWeight = null;
@@ -331,13 +370,28 @@
             const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
             const prevMonth = () => {
+                const minMonthDate = activePhase === 1 ? PHASE_1_START : PHASE_2_START;
                 const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-                if (newDate >= new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) setCurrentDate(newDate);
+                if (newDate >= minMonthDate) setCurrentDate(newDate);
             };
 
             const nextMonth = () => {
+                const maxMonthDate = activePhase === 1 ? PHASE_1_END : PHASE_2_END;
                 const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-                if (newDate <= new Date(END_DATE.getFullYear(), END_DATE.getMonth(), 1)) setCurrentDate(newDate);
+                if (newDate <= maxMonthDate) setCurrentDate(newDate);
+            };
+
+            const handlePhaseChange = (phase) => {
+                setActivePhase(phase);
+                if (phase === 1) {
+                    if (currentDate < PHASE_1_START || currentDate > PHASE_1_END) {
+                        setCurrentDate(new Date(2026, 2, 1));
+                    }
+                } else if (phase === 2) {
+                    if (currentDate < PHASE_2_START || currentDate > PHASE_2_END) {
+                        setCurrentDate(new Date(2026, 8, 1));
+                    }
+                }
             };
 
             const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -449,7 +503,11 @@
 
             const isDateInRange = (year, month, day) => {
                 const checkDate = new Date(year, month, day);
-                return checkDate >= START_DATE && checkDate <= END_DATE;
+                if (activePhase === 1) {
+                    return checkDate >= PHASE_1_START && checkDate <= PHASE_1_END;
+                } else {
+                    return checkDate >= PHASE_2_START && checkDate <= PHASE_2_END;
+                }
             };
 
             return (
@@ -487,9 +545,9 @@
                                 <p className="text-neutral-400 text-sm mb-6 text-left uppercase font-bold tracking-widest italic">Target: till you get abs wanka.</p>
                                 
                                 <div className="w-full overflow-x-auto hide-scrollbar bg-neutral-950 rounded-xl border border-neutral-800 p-4">
-                                    <div className="min-w-[600px] h-[300px] md:h-[400px] relative">
+                                    <div className="min-w-[900px] h-[300px] md:h-[400px] relative">
                                         {(() => {
-                                            const svgWidth = 800;
+                                            const svgWidth = 1000;
                                             const svgHeight = 400;
                                             const paddingX = 40;
                                             const paddingY = 40;
@@ -652,6 +710,30 @@
                             </div>
 
                             <div className="lg:col-span-3 bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+                                {/* PHASE SELECTOR */}
+                                <div className="flex items-center gap-2 mb-4">
+                                    <button
+                                        onClick={() => handlePhaseChange(1)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                                            activePhase === 1
+                                                ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]'
+                                                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                                        }`}
+                                    >
+                                        Phase 1 (Mar - Aug 2026)
+                                    </button>
+                                    <button
+                                        onClick={() => handlePhaseChange(2)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                                            activePhase === 2
+                                                ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]'
+                                                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                                        }`}
+                                    >
+                                        Phase 2 (Sep 2026 - Mar 2027)
+                                    </button>
+                                </div>
+
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="text-2xl font-black text-white">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
                                     <div className="flex gap-2">
@@ -717,4 +799,3 @@
     </script>
 </body>
 </html>
-
